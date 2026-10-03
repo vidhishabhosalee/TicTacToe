@@ -1,0 +1,129 @@
+import tkinter as tk
+import tkinter.messagebox
+ 
+# ---------- Colour theme ----------
+BG = "#1e1b4b"          # deep indigo window background
+CELL_BG = "#eef2ff"     # empty cell
+CELL_HOVER = "#c7d2fe"  # cell hover
+X_COLOR = "#ef4444"     # red for X
+O_COLOR = "#2563eb"     # blue for O
+WIN_BG = "#facc15"      # yellow highlight for winning line
+P1_COLOR = "#fca5a5"
+P2_COLOR = "#93c5fd"
+RESTART_BG = "#22c55e"
+RESTART_HOVER = "#16a34a"
+ 
+WIN_LINES = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
+             (0, 3, 6), (1, 4, 7), (2, 5, 8),
+             (0, 4, 8), (2, 4, 6)]
+ 
+root = tk.Tk()
+root.title("Tic Tac Toe")
+root.configure(bg=BG)
+ 
+board = [" "] * 9
+buttons = []
+turn = "X"       # X = Player 1, O = Player 2
+game_over = False
+ 
+ 
+def make_hover(widget, normal, hover):
+    widget.bind("<Enter>", lambda e: widget["state"] != "disabled" and widget.config(bg=hover)
+                if widget["bg"] == normal else None)
+    widget.bind("<Leave>", lambda e: widget.config(bg=normal) if widget["bg"] == hover else None)
+ 
+ 
+def update_label():
+    if turn == "X":
+        playerturn.config(text="Player 1 turn!", fg=P1_COLOR)
+    else:
+        playerturn.config(text="Player 2 turn!", fg=P2_COLOR)
+ 
+ 
+def disable_all():
+    for btn in buttons:
+        btn.config(state="disabled", cursor="arrow")
+ 
+ 
+def check_winner():
+    for line in WIN_LINES:
+        a, b, c = line
+        if board[a] != " " and board[a] == board[b] == board[c]:
+            return line
+    return None
+ 
+ 
+def button_click(i):
+    global turn, game_over
+    if game_over or board[i] != " ":
+        return
+ 
+    board[i] = turn
+    buttons[i].config(text=turn,
+                      fg=X_COLOR if turn == "X" else O_COLOR,
+                      bg=CELL_BG)
+ 
+    line = check_winner()
+    if line:
+        game_over = True
+        for idx in line:
+            buttons[idx].config(bg=WIN_BG)
+        disable_all()
+        winner = "1" if turn == "X" else "2"
+        playerturn.config(text=f"Player {winner} wins!", fg=WIN_BG)
+        tkinter.messagebox.showinfo("Tic Tac Toe", f"Winner is player {winner}")
+        return
+ 
+    if " " not in board:
+        game_over = True
+        disable_all()
+        playerturn.config(text="It's a draw!", fg="white")
+        tkinter.messagebox.showinfo("Tic Tac Toe", "Match is Draw.")
+        return
+ 
+    turn = "O" if turn == "X" else "X"
+    update_label()
+ 
+ 
+def restart():
+    global turn, game_over
+    turn = "X"
+    game_over = False
+    for i, btn in enumerate(buttons):
+        board[i] = " "
+        btn.config(text=" ", bg=CELL_BG, state="normal", cursor="hand2")
+    update_label()
+ 
+ 
+# ---------- Board buttons ----------
+for i in range(9):
+    btn = tk.Button(root, text=" ", font=("Helvetica", 32, "bold"),
+                    width=4, height=1, bg=CELL_BG, activebackground=CELL_HOVER,
+                    relief="flat", bd=0, cursor="hand2",
+                    command=lambda i=i: button_click(i))
+    btn.grid(row=i // 3, column=i % 3, sticky="snew", padx=4, pady=4, ipadx=10, ipady=14)
+    buttons.append(btn)
+ 
+# ---------- Bottom row ----------
+playerturn = tk.Label(root, text="Player 1 turn!", font=("Helvetica", 14, "bold"),
+                      bg=BG, fg=P1_COLOR)
+playerturn.grid(row=3, column=0, sticky="snew", padx=4, pady=10)
+ 
+restart_btn = tk.Button(root, text="Restart", font=("Helvetica", 13, "bold"),
+                        bg=RESTART_BG, fg="white", activebackground=RESTART_HOVER,
+                        activeforeground="white", relief="flat", bd=0,
+                        cursor="hand2", command=restart)
+restart_btn.grid(row=3, column=1, sticky="snew", padx=10, pady=14)
+restart_btn.bind("<Enter>", lambda e: restart_btn.config(bg=RESTART_HOVER))
+restart_btn.bind("<Leave>", lambda e: restart_btn.config(bg=RESTART_BG))
+ 
+playerdetails = tk.Label(root, font=("Helvetica", 11, "bold"), bg=BG,
+                         text="Player 1 is X\nPlayer 2 is O", fg="white", justify="left")
+playerdetails.grid(row=3, column=2, sticky="snew", padx=4, pady=10)
+ 
+for col in range(3):
+    root.columnconfigure(col, weight=1)
+for row in range(4):
+    root.rowconfigure(row, weight=1)
+ 
+root.mainloop()
